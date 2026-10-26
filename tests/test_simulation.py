@@ -7,6 +7,7 @@ Run with:  pytest tests/test_simulation.py -v
 import pytest
 
 from mm_c_queueing.simulation import simulate_mmc
+from mm_c_queueing import compare
 
 
 # --------------------------------------------------------------------------- #
@@ -84,3 +85,31 @@ def test_agreement_across_utilizations(lam, mu, c):
     rel_err = abs(sim["Wq"] - ana["Wq"]) if ana["Wq"] > 0 else abs(sim["Wq"])
     abs_tol = max(0.12 * ana["Wq"], 1e-4)
     assert rel_err < abs_tol, f"Wq mismatch at rho={ana['rho']:.3f}: sim={sim['Wq']:.4f}, ana={ana['Wq']:.4f}"
+
+
+# --------------------------------------------------------------------------- #
+# compare() convenience function
+# --------------------------------------------------------------------------- #
+def test_compare_returns_stable_for_rho_below_one():
+    """compare() returns a dict with stable=True when rho < 1."""
+    result = compare(0.5, 1.0, 2, n_tasks=50_000, warmup=2_000, seed=1)
+    assert result is not None
+    assert result["stable"] is True
+    assert result["rho"] == pytest.approx(0.25)
+    for key in ("p_wait", "Lq", "L", "Wq", "W"):
+        assert key in result
+        assert "analytical" in result[key]
+        assert "simulation" in result[key]
+
+
+def test_compare_returns_none_for_unstable():
+    """compare() returns None when rho >= 1."""
+    assert compare(2.0, 1.0, 1, n_tasks=10_000, seed=1) is None
+
+
+def test_compare_relative_error_small_at_low_load():
+    """At low load, compare() relative error should be small."""
+    result = compare(0.5, 1.0, 2, n_tasks=100_000, warmup=5_000, seed=42)
+    assert result is not None
+    assert result["Lq"]["relative_error"] < 0.10
+    assert result["Wq"]["relative_error"] < 0.10
