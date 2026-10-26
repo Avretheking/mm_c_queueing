@@ -2,8 +2,7 @@
 
 Analytical (Erlang-C) solution plus an event-driven discrete-event simulator for
 modeling AI task scheduling in cloud data centers as an M/M/c queueing system.
-This is the implementation companion to the case study report submitted for the
-M.E. (CSE) course at Chandigarh University.
+This is the implementation companion to the case study report.
 
 ## What it does
 
